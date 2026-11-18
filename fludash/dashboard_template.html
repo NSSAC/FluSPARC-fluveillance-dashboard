@@ -1,0 +1,1114 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Fluveillance Dashboard</title>
+<!--__ICON__-->
+<style>
+:root {
+  color-scheme: light;
+  --page: #f9f9f7; --surface: #fcfcfb; --ink: #0b0b0b; --ink2: #52514e; --muted: #898781;
+  --grid: #e1e0d9; --axis: #c3c2b7; --ring: rgba(11,11,11,0.10); --accent: #2a78d6;
+  --wash: rgba(11,11,11,0.06); --logo-bg: transparent;
+  --s0: #2a78d6; --s1: #eb6834; --s2: #1baf7a; --s3: #eda100; --s4: #e87ba4; --s5: #008300;
+  --s6: #6250d6; --s7: #e34948;
+  --dv0: #1c5cab; --dv1: #86b6ef; --dv2: #e1e0d9; --dv3: #f3a5a4; --dv4: #e34948; --dv5: #a32d2d;
+  --sq0: #cde2fb; --sq1: #9ec5f4; --sq2: #6da7ec; --sq3: #3987e5; --sq4: #256abf; --sq5: #0d366b;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    color-scheme: dark;
+    --page: #0d0d0d; --surface: #1a1a19; --ink: #f0efec; --ink2: #c3c2b7; --muted: #898781;
+    --grid: #2c2c2a; --axis: #383835; --ring: rgba(255,255,255,0.10); --accent: #3987e5;
+    --wash: rgba(255,255,255,0.08); --logo-bg: #f0efec;
+    --s0: #3987e5; --s1: #d95926; --s2: #199e70; --s3: #c98500; --s4: #d55181; --s5: #0ca30c;
+    --s6: #9085e9; --s7: #e66767;
+    --dv0: #6da7ec; --dv1: #1f4f8f; --dv2: #383835; --dv3: #7d2f2f; --dv4: #c94848; --dv5: #f08a8a;
+    --sq0: #0d366b; --sq1: #184f95; --sq2: #256abf; --sq3: #3987e5; --sq4: #6da7ec; --sq5: #b7d3f6;
+  }
+}
+:root[data-theme="dark"] {
+  color-scheme: dark;
+  --page: #0d0d0d; --surface: #1a1a19; --ink: #f0efec; --ink2: #c3c2b7; --muted: #898781;
+  --grid: #2c2c2a; --axis: #383835; --ring: rgba(255,255,255,0.10); --accent: #3987e5;
+  --wash: rgba(255,255,255,0.08); --logo-bg: #f0efec;
+  --s0: #3987e5; --s1: #d95926; --s2: #199e70; --s3: #c98500; --s4: #d55181; --s5: #0ca30c;
+  --s6: #9085e9; --s7: #e66767;
+  --dv0: #6da7ec; --dv1: #1f4f8f; --dv2: #383835; --dv3: #7d2f2f; --dv4: #c94848; --dv5: #f08a8a;
+  --sq0: #0d366b; --sq1: #184f95; --sq2: #256abf; --sq3: #3987e5; --sq4: #6da7ec; --sq5: #b7d3f6;
+}
+* { box-sizing: border-box; }
+html, body { overflow-x: clip; }   /* clip, not hidden: hidden makes body a scroller and breaks position: sticky */
+body { margin: 0; background: var(--page); color: var(--ink);
+  font: 14px/1.4 system-ui, -apple-system, "Segoe UI", sans-serif; }
+header { position: sticky; top: 0; z-index: 5; background: var(--page);
+  border-bottom: 1px solid var(--grid); padding: 8px 16px 8px; }
+h1 { font-size: 18px; margin: 0; font-weight: 650; }
+.brand { display: flex; align-items: center; gap: 10px; }
+.brand .logo { height: 32px; width: auto; display: block; box-sizing: content-box; padding: 1px 5px;
+  border-radius: 6px; background: var(--logo-bg); }
+h2 { font-size: 15px; margin: 20px 0 6px; font-weight: 650; }
+.meta { color: var(--ink2); font-size: 12px; }
+.top { display: flex; flex-wrap: wrap; gap: 4px 12px; align-items: center; }
+.top .spacer { flex: 1; }
+.bar { display: flex; flex-wrap: wrap; gap: 6px 8px; align-items: center; }
+button, input, select { font: inherit; color: var(--ink); }
+button { background: var(--surface); border: 1px solid var(--ring); border-radius: 6px;
+  padding: 3px 9px; cursor: pointer; }
+button:hover { background: var(--wash); }
+button:focus-visible, input:focus-visible, a:focus-visible, .hex:focus-visible { outline: 2px solid var(--accent); outline-offset: 1px; }
+input { background: var(--surface); border: 1px solid var(--ring); border-radius: 6px; padding: 3px 8px; width: 170px; }
+#pos { font-weight: 650; min-width: 190px; }
+#pos .n { color: var(--muted); font-weight: 400; font-size: 12px; }
+main { padding: 10px 16px 40px; max-width: 1500px; }
+.panel { background: var(--surface); border: 1px solid var(--ring); border-radius: 8px; padding: 10px 12px; min-width: 0; }
+.ctlgrid { display: grid; grid-template-columns: minmax(250px, 340px) minmax(0, 1fr); gap: 12px; align-items: start; }
+.mapbox { min-width: 0; }
+#hexmap { width: 100%; height: auto; display: block; }
+.hex { cursor: pointer; }
+.hex polygon { fill: var(--page); stroke: var(--axis); stroke-width: 1; }
+.hex text { fill: var(--ink); font-size: 10px; font-weight: 600; text-anchor: middle; dominant-baseline: central;
+  pointer-events: none; font-family: system-ui, -apple-system, "Segoe UI", sans-serif; }
+.hex:hover polygon { fill: var(--wash); stroke: var(--ink2); }
+.hex.na polygon { fill: transparent; stroke-dasharray: 2 2; }
+.hex.na text { fill: var(--muted); font-weight: 400; }
+.hex.us polygon { stroke: var(--ink2); stroke-width: 1.5; }
+.hex.on polygon { stroke: var(--ink); stroke-width: 2.6; stroke-dasharray: none; }
+.hex.on text { font-weight: 800; }
+.maphint { color: var(--muted); font-size: 11px; margin-top: 2px; }
+.maplegend { font-size: 11px; color: var(--ink2); margin-top: 4px; }
+.maplegend .ttl { margin-bottom: 3px; }
+.maplegend .ttl b { color: var(--ink); font-weight: 600; }
+.mlkeys { display: flex; flex-wrap: wrap; gap: 2px 3px; margin: 2px 0 4px; }
+.mlk { display: flex; flex-direction: column; align-items: center; font-size: 10px; color: var(--ink2); min-width: 38px; }
+.mlk i { display: block; width: 38px; height: 9px; border-radius: 2px; margin-bottom: 1px; }
+.mlk i.none { border: 1px dashed var(--axis); background: transparent; }
+.maplegend .seg button { font-size: 11px; padding: 1px 6px; }
+.seasonsrow { flex-basis: 100%; display: flex; flex-wrap: wrap; gap: 4px 6px; align-items: center; }
+.schips { display: inline-flex; flex-wrap: wrap; gap: 3px; }
+.schip { font-size: 12px; padding: 1px 6px; font-variant-numeric: tabular-nums; }
+.schip[aria-pressed="true"] { background: var(--ink); color: var(--surface); border-color: var(--ink); }
+.schip.na { color: var(--muted); border-style: dashed; }
+.schip[aria-pressed="true"].na { color: var(--surface); }
+.quick button { font-size: 12px; padding: 1px 7px; color: var(--ink2); }
+.sources { display: grid; grid-template-columns: repeat(auto-fill, minmax(min(300px, 100%), 1fr)); gap: 8px; min-width: 0; }
+.src { border: 1px solid var(--ring); border-radius: 8px; padding: 6px 8px; background: var(--page); min-width: 0; }
+.src.on { border-color: var(--axis); background: var(--surface); }
+.srcbtn { font-weight: 650; display: inline-flex; align-items: center; gap: 6px; }
+.srcbtn[aria-pressed="false"] { color: var(--ink2); font-weight: 500; }
+.sw { width: 12px; height: 12px; border-radius: 3px; display: inline-block; flex: none; }
+.srcbtn[aria-pressed="false"] .sw { opacity: .35; }
+.badge { font-size: 11px; color: var(--ink2); border: 1px solid var(--ring); border-radius: 4px; padding: 0 4px; margin-left: 4px; }
+.when { font-size: 11px; color: var(--muted); margin-left: 6px; }
+.sigs { display: flex; flex-wrap: wrap; gap: 4px; margin-top: 5px; }
+.sig { font-size: 12px; padding: 1px 7px; display: inline-flex; align-items: center; gap: 5px; color: var(--ink2); }
+.sig[aria-pressed="true"] { color: var(--ink); border-color: var(--ink2); background: var(--wash); }
+.sig[aria-pressed="false"] svg { opacity: .4; }
+.sig.na { text-decoration: line-through; color: var(--muted); }
+.controls { display: flex; flex-wrap: wrap; gap: 8px 18px; align-items: center; margin-top: 10px; }
+.seg { display: inline-flex; flex-wrap: wrap; border: 1px solid var(--ring); border-radius: 6px; overflow: hidden; vertical-align: middle; }
+.seg button { border: 0; border-radius: 0; border-right: 1px solid var(--ring); }
+.seg button:last-child { border-right: 0; }
+.seg button[aria-pressed="true"] { background: var(--ink); color: var(--surface); }
+.lbl { color: var(--ink2); font-size: 12px; margin-right: 4px; }
+#note { color: var(--ink2); font-size: 12px; min-height: 18px; margin: 8px 2px 4px; }
+#chart { width: 100%; height: 540px; min-width: 0; max-width: 100%; }
+.chartwrap { position: relative; min-width: 0; }
+#guide { position: absolute; width: 0; border-left: 1px solid var(--ink2); pointer-events: none; display: none; z-index: 2; }
+#guide.paused { border-left: 2px solid var(--accent); }
+#readout { display: none; margin: 4px 0 0; font-size: 11.5px; color: var(--ink);
+  background: var(--surface); border: 1px solid var(--ring); border-radius: 8px; }
+#readout.paused { border-color: var(--accent); box-shadow: 0 0 0 1px var(--accent); }
+.ro-head { display: flex; flex-wrap: wrap; align-items: center; gap: 2px 10px; padding: 2px 4px 2px 8px; border-bottom: 1px solid var(--grid); }
+#readout.collapsed .ro-head { border-bottom: 0; }
+.ro-when { font-weight: 600; font-variant-numeric: tabular-nums; white-space: nowrap; }
+.ro-hint { flex: 1; min-width: 0; font-size: 11px; color: var(--muted); }
+.ro-head button { font-size: 11px; padding: 0 7px; line-height: 18px; }
+.ro-body { display: grid; grid-template-columns: repeat(auto-fill, minmax(min(165px, 100%), 1fr)); gap: 3px 12px;
+  padding: 3px 8px 4px; max-height: 142px; overflow-y: auto; overscroll-behavior: contain; }
+#readout.collapsed .ro-body { display: none; }
+.ro-col { min-width: 0; }
+.ro-src { display: flex; align-items: center; gap: 5px; font-size: 11px; font-weight: 650; color: var(--ink2); line-height: 15px;
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.ro-src .sw { width: 9px; height: 9px; border-radius: 2px; }
+.ro-grp { font-size: 11px; color: var(--ink2); line-height: 15px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.ro-row { display: grid; grid-template-columns: 16px minmax(0, 1fr) auto; gap: 4px; align-items: center; line-height: 15px; }
+.ro-row svg { width: 16px; }
+.ro-row .nm { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; color: var(--ink2); }
+.ro-row .v { text-align: right; font-variant-numeric: tabular-nums; white-space: nowrap; }
+.ro-row .v small { color: var(--muted); font-size: 10px; margin-left: 3px; }
+.ro-row.past .nm, .ro-row.past .v { color: var(--muted); }
+table { border-collapse: collapse; width: 100%; font-size: 13px; }
+th { text-align: left; color: var(--ink2); font-weight: 600; border-bottom: 1px solid var(--axis); padding: 4px 8px; }
+td { border-bottom: 1px solid var(--grid); padding: 4px 8px; vertical-align: top; }
+td.num, th.num { text-align: right; font-variant-numeric: tabular-nums; white-space: nowrap; }
+td.muted { color: var(--muted); }
+.tablewrap { overflow-x: auto; }
+details { margin-top: 18px; }
+summary { cursor: pointer; font-weight: 650; }
+.about dt { font-weight: 650; margin-top: 10px; }
+.about dd { margin: 2px 0 0 0; color: var(--ink2); }
+#noscript { background: #fff3cd; color: #0b0b0b; padding: 8px 16px; }
+@media (max-width: 900px) {
+  .ctlgrid { grid-template-columns: minmax(0, 1fr); }
+  .mapbox { max-width: 420px; }
+}
+@media (max-width: 700px) {
+  #pos { min-width: 0; }
+  #chart { height: 440px; }
+}
+</style>
+</head>
+<body>
+<div id="noscript">This page needs JavaScript. In JupyterLab use <b>Trust HTML</b>; otherwise open the file in a web browser.</div>
+<header>
+  <div class="top">
+    <h1 class="brand"><!--__LOGO__--><span>Fluveillance Dashboard</span></h1>
+    <span class="meta" id="meta"></span>
+    <span class="spacer"></span>
+    <div class="bar">
+      <input id="q" list="locs" placeholder="state, e.g. VA or Virginia" title="type a code or name, Enter (shortcut: /)" autocomplete="off">
+      <datalist id="locs"></datalist>
+      <button id="prev" title="previous location (←)" aria-label="previous location">◀</button>
+      <span id="pos" aria-live="polite"></span>
+      <button id="next" title="next location (→)" aria-label="next location">▶</button>
+      <button id="theme" title="switch light / dark">◐</button>
+    </div>
+  </div>
+</header>
+<main>
+  <div class="panel">
+    <div class="ctlgrid">
+      <div class="mapbox">
+        <svg id="hexmap" role="group" aria-label="choose a location"></svg>
+        <div class="maplegend" id="maplegend"></div>
+        <div class="maphint">Click a state (or US) · ← → steps through.</div>
+      </div>
+      <div class="sources" id="sources"></div>
+    </div>
+    <div class="controls">
+      <div class="seasonsrow"><span class="lbl">Seasons</span><span class="schips" id="seasons"></span>
+        <span class="quick" id="quick"></span></div>
+      <span><span class="lbl">View</span><span class="seg" id="view"></span></span>
+      <span><span class="lbl">Y-axes</span><span class="seg" id="axis"></span></span>
+      <span><button id="csv" title="download the series in view as CSV">Download CSV</button>
+        <button id="reset" title="back to the default selection">Reset</button></span>
+    </div>
+  </div>
+  <div id="note"></div>
+  <div id="chartzone">
+    <div class="chartwrap" id="chartwrap">
+      <div id="chart" role="img" aria-label="time series chart"></div>
+      <div id="guide"></div>
+    </div>
+    <div id="readout" aria-live="off">
+      <div class="ro-head"><span class="ro-when" id="rowhen"></span><span class="ro-hint" id="rohint"></span>
+        <button id="ropause" title="freeze the guideline here (space)">pause</button>
+        <button id="rofold" title="hide / show the values" aria-expanded="true">−</button></div>
+      <div class="ro-body" id="robody"></div>
+    </div>
+  </div>
+  <h2>Latest values · <span id="tloc"></span></h2>
+  <div class="tablewrap"><table id="latest"></table></div>
+  <details id="about"><summary>About the sources and this page</summary><div class="about" id="aboutbody"></div></details>
+</main>
+<script>/*__PLOTLY__*/</script>
+<script id="data" type="application/json">/*__DATA__*/null</script>
+<script>
+(function () {
+"use strict";
+var D = JSON.parse(document.getElementById("data").textContent);
+var $ = function (id) { return document.getElementById(id); };
+var DAY = 864e5, WEEK = 7 * DAY, T0 = Date.parse(D.t0 + "T00:00:00Z");
+function wdate(i) { return new Date(T0 + i * WEEK).toISOString().slice(0, 10); }
+var DATES = [];
+for (var i = 0; i < D.nweeks; i++) DATES.push(wdate(i));
+var LAST = D.nweeks - 1;
+var DASH = ["solid", "dash", "dot", "dashdot", "longdash"];
+var SVGDASH = {solid: "", dash: "6,3", dot: "1.5,3", dashdot: "6,3,1.5,3", longdash: "10,3"};
+
+// ---------------------------------------------------------------- seasons (MMWR week 30 -> week 29)
+function wk30(y) {          // ms of the Saturday ending MMWR week 30 of year y (week 1 holds the first Wednesday)
+  var j = Date.UTC(y, 0, 1), dow = new Date(j).getUTCDay();
+  return j + ((3 - dow + 7) % 7) * DAY + 3 * DAY + 29 * WEEK;
+}
+function idxOf(ms) { return Math.round((ms - T0) / WEEK); }
+function seasonOf(i) { var ms = T0 + i * WEEK, y = new Date(ms).getUTCFullYear(); return ms >= wk30(y) ? y : y - 1; }
+function slabel(y) { return y + "-" + String((y + 1) % 100).padStart(2, "0"); }
+var CURY = seasonOf(LAST), FIRSTY = seasonOf(0);
+
+// ---------------------------------------------------------------- catalog
+var SIG = {}, ORDER = [], DEFAULTS = [];
+D.sources.forEach(function (src) {
+  src.signals.forEach(function (s, k) {
+    var sid = src.key + "." + s.key;
+    SIG[sid] = {sid: sid, src: src, key: s.key, label: s.label, unit: s.unit, desc: s.description,
+                slot: src.slot, dash: DASH[k % DASH.length], last: s.last_week, def: s["default"]};
+    ORDER.push(sid);
+  });
+});
+["flusight.nhsn_flu_admissions", "nssp.flu_ed_pct", "ilinet.ili_pct"].forEach(function (sid) {
+  if (SIG[sid]) DEFAULTS.push(sid);
+});
+if (!DEFAULTS.length && ORDER.length) DEFAULTS.push(ORDER[0]);
+var LOCS = D.locations;
+
+// ---------------------------------------------------------------- state
+var S = {loc: "US", sel: DEFAULTS.slice(), seasons: [CURY], axis: "unit", view: "timeline", map: "change"};
+var MAPMODES = [["change", "1-week change"], ["level", "% of last season's peak"]];
+var VIEWS = [["timeline", "Timeline"], ["overlay", "Overlay seasons"]];
+var AXES = [["unit", "One per unit"], ["signal", "One per signal"], ["peak", "% of peak"], ["panels", "Stacked panels"]];
+var STORE = "flu-surveillance-dashboard";
+
+function readHash() {
+  var h = "";
+  try { h = decodeURIComponent((location.hash || "").slice(1)); } catch (e) {}
+  if (!h) return null;
+  var o = {};
+  if (h.indexOf("=") < 0) { o.loc = h.toUpperCase(); return o; }
+  h.split("&").forEach(function (kv) {
+    var p = kv.split("="), k = p[0], v = p.slice(1).join("=");
+    if (k === "loc") o.loc = v.toUpperCase();
+    else if (k === "s") o.sel = v ? v.split(",") : [];
+    else if (k === "r") o.seasons = parseSeasons(v);
+    else if (k === "m") o.map = v;
+    else if (k === "a") o.axis = v;
+    else if (k === "v") o.view = v;
+  });
+  return o;
+}
+function valid(opts, v) { return opts.some(function (r) { return r[0] === v; }); }
+function allYears() { var a = []; for (var y = FIRSTY; y <= CURY; y++) a.push(y); return a; }
+function lastN(n) { return allYears().slice(-n); }
+function parseSeasons(v) {         // "2023,2025" or the older presets season / 2 / 5 / all
+  if (v === "season") return [CURY];
+  if (v === "all") return allYears();
+  if (/^\d{1,2}$/.test(v)) return lastN(+v);
+  return v.split(",").map(Number).filter(function (y) { return y >= FIRSTY && y <= CURY; });
+}
+function apply(o) {
+  if (!o) return;
+  if (o.loc && findLoc(o.loc) >= 0) S.loc = LOCS[findLoc(o.loc)].code;
+  if (o.sel) S.sel = o.sel.filter(function (s) { return SIG[s]; });
+  if (o.range && !o.seasons) o.seasons = parseSeasons(String(o.range));     // older saved state
+  if (o.seasons) {
+    var ys = o.seasons.filter(function (y, k, a) { return y >= FIRSTY && y <= CURY && a.indexOf(y) === k; });
+    if (ys.length) S.seasons = ys;
+  }
+  if (o.map && valid(MAPMODES, o.map)) S.map = o.map;
+  if (o.axis && valid(AXES, o.axis)) S.axis = o.axis;
+  if (o.view && valid(VIEWS, o.view)) S.view = o.view;
+}
+function save() {
+  var h = "#loc=" + S.loc + "&s=" + S.sel.join(",") + "&r=" + years().join(",") + "&a=" + S.axis + "&v=" + S.view + "&m=" + S.map;
+  try { history.replaceState(null, "", h); } catch (e) {}
+  try { localStorage.setItem(STORE, JSON.stringify(S)); } catch (e) {}
+}
+function load() {
+  try { var v = localStorage.getItem(STORE); if (v) apply(JSON.parse(v)); } catch (e) {}
+  apply(readHash());
+}
+
+// ---------------------------------------------------------------- helpers
+function css(name) { return getComputedStyle(document.documentElement).getPropertyValue(name).trim(); }
+function color(slot) { return css("--s" + (slot % 8)); }
+function el(tag, attrs, text) {
+  var e = document.createElement(tag);
+  for (var k in (attrs || {})) e.setAttribute(k, attrs[k]);
+  if (text != null) e.textContent = text;
+  return e;
+}
+var NS = "http://www.w3.org/2000/svg";
+function sv(tag, attrs) { var e = document.createElementNS(NS, tag); for (var k in attrs) e.setAttribute(k, attrs[k]); return e; }
+function dashSvg(slot, dash) {
+  var svg = sv("svg", {width: "22", height: "8", "aria-hidden": "true"});
+  var l = sv("line", {x1: "1", y1: "4", x2: "21", y2: "4", stroke: color(slot), "stroke-width": "2.2"});
+  if (SVGDASH[dash]) l.setAttribute("stroke-dasharray", SVGDASH[dash]);
+  svg.appendChild(l);
+  return svg;
+}
+function isCount(unit) { return /^Admissions/.test(unit); }
+function fmt(v, unit) {
+  if (v == null || isNaN(v)) return "–";
+  if (isCount(unit)) return Math.round(v).toLocaleString();
+  return (Math.abs(v) >= 100 ? v.toFixed(1) : v.toFixed(2));
+}
+function findLoc(q) {
+  q = (q || "").trim().toUpperCase();
+  if (!q) return -1;
+  var j;
+  for (j = 0; j < LOCS.length; j++) if (LOCS[j].code === q) return j;
+  for (j = 0; j < LOCS.length; j++) if (LOCS[j].name.toUpperCase() === q) return j;
+  for (j = 0; j < LOCS.length; j++) if (LOCS[j].name.toUpperCase().indexOf(q) === 0) return j;
+  for (j = 0; j < LOCS.length; j++) if (LOCS[j].code.indexOf(q) === 0) return j;
+  return -1;
+}
+function locName(code) { var j = findLoc(code); return j >= 0 ? LOCS[j].name : code; }
+function years() { return S.seasons.slice().sort(function (a, b) { return a - b; }); }
+function blocks() {                // runs of consecutive selected seasons
+  var out = [];
+  years().forEach(function (y) {
+    var b = out[out.length - 1];
+    if (b && b[b.length - 1] === y - 1) b.push(y); else out.push([y]);
+  });
+  return out;
+}
+function blockIdx(b) { return [Math.max(0, idxOf(wk30(b[0]))), Math.min(LAST, idxOf(wk30(b[b.length - 1] + 1)) - 1)]; }
+function seasonHasData(y, loc) {
+  var a = idxOf(wk30(y)), b = idxOf(wk30(y + 1)) - 1;
+  return S.sel.some(function (sid) { var s = slice(sid, loc, a, b); return s && s.any; });
+}
+function getSeries(sid, loc) { return (D.series[loc] || {})[sid] || null; }   // [offset, values]
+function slice(sid, loc, i0, i1) {   // global week indices + values within [i0, i1]
+  var s = getSeries(sid, loc), idx = [], y = [], any = false;
+  if (!s) return null;
+  var off = s[0], v = s[1];
+  for (var j = Math.max(i0, off); j <= Math.min(i1, off + v.length - 1); j++) {
+    idx.push(j); y.push(v[j - off]);
+    if (v[j - off] != null) any = true;
+  }
+  return {idx: idx, y: y, any: any};
+}
+function selected() {   // catalog order, so colours / dashes never depend on click order
+  return ORDER.filter(function (sid) { return S.sel.indexOf(sid) >= 0; });
+}
+
+// ---------------------------------------------------------------- hex map
+// pointy-top hexes, odd rows shifted half a hex right; [row, col]
+var HEX = {
+  AK: [0, 0], US: [0, 5], ME: [0, 11],
+  VT: [1, 9], NH: [1, 10],
+  WA: [2, 0], ID: [2, 1], MT: [2, 2], ND: [2, 3], MN: [2, 4], WI: [2, 5], MI: [2, 7], NY: [2, 9], MA: [2, 10],
+  OR: [3, 0], NV: [3, 1], WY: [3, 2], SD: [3, 3], IA: [3, 4], IL: [3, 5], IN: [3, 6], OH: [3, 7], PA: [3, 8],
+  NJ: [3, 9], CT: [3, 10], RI: [3, 11],
+  CA: [4, 0], UT: [4, 1], CO: [4, 2], NE: [4, 3], MO: [4, 4], KY: [4, 5], WV: [4, 6], VA: [4, 7], MD: [4, 8], DE: [4, 9],
+  AZ: [5, 1], NM: [5, 2], KS: [5, 3], AR: [5, 4], TN: [5, 5], NC: [5, 6], SC: [5, 7], DC: [5, 8],
+  OK: [6, 3], LA: [6, 4], MS: [6, 5], AL: [6, 6], GA: [6, 7],
+  HI: [7, 0], TX: [7, 3], FL: [7, 7], PR: [7, 10]
+};
+function buildHex() {
+  var svg = $("hexmap"); svg.textContent = "";
+  var R = 16, W = Math.sqrt(3) * R, pad = 2, extra = 0, maxc = 0, maxr = 0;
+  var pos = {};
+  LOCS.forEach(function (l) {
+    var p = HEX[l.code];
+    if (!p) { p = [8, extra++]; }       // anything new lands in a spare row
+    pos[l.code] = p; maxc = Math.max(maxc, p[1] + (p[0] % 2 ? 0.5 : 0)); maxr = Math.max(maxr, p[0]);
+  });
+  var width = (maxc + 1) * W + 2 * pad, height = maxr * 1.5 * R + 2 * R + 2 * pad;
+  svg.setAttribute("viewBox", "0 0 " + width.toFixed(1) + " " + height.toFixed(1));
+  LOCS.forEach(function (l) {
+    var p = pos[l.code], cx = pad + W / 2 + (p[1] + (p[0] % 2 ? 0.5 : 0)) * W, cy = pad + R + p[0] * 1.5 * R;
+    var pts = [], r = R - 1.2;                       // small surface gap between hexes
+    for (var k = 0; k < 6; k++) {
+      var a = Math.PI / 180 * (60 * k - 90);
+      pts.push((cx + r * Math.cos(a)).toFixed(1) + "," + (cy + r * Math.sin(a)).toFixed(1));
+    }
+    var g = sv("g", {"class": "hex" + (l.code === "US" ? " us" : ""), tabindex: "0", role: "button",
+                     "data-code": l.code, "aria-label": l.name});
+    var t = sv("title", {}); t.textContent = l.name; g.appendChild(t);
+    g.appendChild(sv("polygon", {points: pts.join(" ")}));
+    var tx = sv("text", {x: cx.toFixed(1), y: cy.toFixed(1)}); tx.textContent = l.code; g.appendChild(tx);
+    g.addEventListener("click", function () { setLoc(l.code); });
+    g.addEventListener("keydown", function (e) { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); setLoc(l.code); } });
+    svg.appendChild(g);
+  });
+}
+// colour = the most recently selected signal: 1-week change (diverging) or level vs last season's peak
+var BINS = {
+  change: {edges: [-25, -10, 10, 25, 50], pre: "--dv",
+           labels: ["< \u221225%", "\u221225 to \u221210", "\u00b110%", "+10 to 25", "+25 to 50", "> +50%"]},
+  level: {edges: [10, 25, 50, 75, 100], pre: "--sq",
+          labels: ["< 10%", "10\u201325", "25\u201350", "50\u201375", "75\u2013100", "> 100%"]}
+};
+var LASTMAX = {};
+function mapSignal() {
+  for (var k = S.sel.length - 1; k >= 0; k--) if (SIG[S.sel[k]]) return S.sel[k];
+  return null;
+}
+function lastIdx(s) { var j = s[1].length - 1; while (j >= 0 && s[1][j] == null) j--; return j < 0 ? -1 : s[0] + j; }
+function signalLastMax(sid) {
+  if (!(sid in LASTMAX)) {
+    var m = -1;
+    LOCS.forEach(function (l) { var s = getSeries(sid, l.code); if (s) m = Math.max(m, lastIdx(s)); });
+    LASTMAX[sid] = m;
+  }
+  return LASTMAX[sid];
+}
+function seasonMax(s, y) {
+  var a = idxOf(wk30(y)), b = idxOf(wk30(y + 1)) - 1, mx = null, at = -1;
+  for (var k = 0; k < s[1].length; k++) {
+    var j = s[0] + k, v = s[1][k];
+    if (v == null || j < a || j > b) continue;
+    if (mx == null || v > mx) { mx = v; at = j; }
+  }
+  return [mx, at];
+}
+function mapValue(sid, loc) {      // {pct, last, prev, j, stale} or null
+  var s = getSeries(sid, loc);
+  if (!s) return null;
+  var j = lastIdx(s);
+  if (j < 0) return null;
+  var last = s[1][j - s[0]], prev = j - 1 >= s[0] ? s[1][j - 1 - s[0]] : null;
+  var o = {last: last, prev: prev, j: j, stale: j < signalLastMax(sid) - 2, pct: null};
+  if (S.map === "change") {
+    if (prev != null) o.pct = prev > 0 ? 100 * (last - prev) / prev : (last > 0 ? Infinity : 0);
+  } else {
+    var pk = seasonMax(s, CURY - 1)[0];
+    if (pk) { o.pct = 100 * last / pk; o.peak = pk; }
+  }
+  return o;
+}
+function binOf(pct) {
+  var e = BINS[S.map].edges, k = 0;
+  if (S.map === "change") { while (k < e.length && (k === 2 ? pct > e[k] : pct >= e[k])) k++; }
+  else { while (k < e.length && pct >= e[k]) k++; }
+  return k;
+}
+function inkOn(hex) {               // dark or light label on a fill
+  var m = /^#?([0-9a-f]{6})$/i.exec(hex.trim());
+  if (!m) return css("--ink");
+  var n = parseInt(m[1], 16), r = (n >> 16) / 255, g = (n >> 8 & 255) / 255, b = (n & 255) / 255;
+  var L = function (c) { return c <= 0.03928 ? c / 12.92 : Math.pow((c + 0.055) / 1.055, 2.4); };
+  return 0.2126 * L(r) + 0.7152 * L(g) + 0.0722 * L(b) > 0.4 ? "#0b0b0b" : "#ffffff";
+}
+function buildMapLegend() {
+  var box = $("maplegend"); box.textContent = "";
+  box.appendChild(el("div", {"class": "ttl", id: "mlttl"}));
+  box.appendChild(el("div", {"class": "mlkeys", id: "mlkeys"}));
+  var seg = el("span", {"class": "seg", id: "mapmode"});
+  MAPMODES.forEach(function (o) {
+    var b = el("button", {"data-v": o[0], "aria-pressed": "false"}, o[1]);
+    b.onclick = function () { S.map = o[0]; render(); };
+    seg.appendChild(b);
+  });
+  box.appendChild(seg);
+}
+function markHex() {
+  var sid = mapSignal(), svg = $("hexmap"), gs = svg.querySelectorAll(".hex"), on = null;
+  var g = sid ? SIG[sid] : null, mode = BINS[S.map], cols = [];
+  for (var b = 0; b < 6; b++) cols.push(css(mode.pre + b));
+  for (var k = 0; k < gs.length; k++) {
+    var c = gs[k].getAttribute("data-code"), poly = gs[k].querySelector("polygon"), txt = gs[k].querySelector("text");
+    var v = sid ? mapValue(sid, c) : null, ok = v && !v.stale && v.pct != null;
+    var tip = locName(c);
+    if (g) {
+      if (!v) tip += " \u00b7 " + g.label + ": not reported";
+      else {
+        tip += " \u00b7 " + g.label + ": " + fmt(v.last, g.unit) + " (week ending " + wdate(v.j) + ")";
+        if (v.stale) tip += " \u2014 no recent report";
+        else if (S.map === "change" && v.prev != null)
+          tip += ", " + (isFinite(v.pct) ? (v.pct >= 0 ? "+" : "") + v.pct.toFixed(0) + "%" : "up from 0") + " vs " + fmt(v.prev, g.unit) + " the week before";
+        else if (S.map === "level" && v.pct != null)
+          tip += ", " + v.pct.toFixed(0) + "% of " + slabel(CURY - 1) + " peak (" + fmt(v.peak, g.unit) + ")";
+      }
+    }
+    gs[k].querySelector("title").textContent = tip;
+    var fill = ok ? cols[binOf(v.pct)] : "";
+    poly.style.fill = fill;
+    txt.style.fill = fill ? inkOn(fill) : "";
+    gs[k].classList.toggle("na", !!sid && !ok);
+    gs[k].classList.toggle("on", c === S.loc);
+    gs[k].setAttribute("aria-pressed", c === S.loc ? "true" : "false");
+    gs[k].setAttribute("aria-label", tip);
+    if (c === S.loc) on = gs[k];
+  }
+  if (on) svg.appendChild(on);        // selected outline drawn above its neighbours
+  // legend
+  var ttl = $("mlttl"), keys = $("mlkeys");
+  ttl.textContent = ""; keys.textContent = "";
+  $("mapmode").style.display = sid ? "" : "none";
+  if (!sid) { ttl.textContent = "Select a signal to colour the map."; return; }
+  ttl.appendChild(document.createTextNode("Map: "));
+  ttl.appendChild(el("b", {}, g.label));
+  ttl.appendChild(document.createTextNode(" (most recently selected) \u2014 " +
+    (S.map === "change" ? "change in the latest week vs the week before" : "latest week as % of the " + slabel(CURY - 1) + " peak") +
+    ", latest week " + wdate(signalLastMax(sid)).slice(5)));
+  mode.labels.forEach(function (lab, b) {
+    var kk = el("span", {"class": "mlk"}), sw = el("i"); sw.style.background = cols[b];
+    kk.appendChild(sw); kk.appendChild(document.createTextNode(lab)); keys.appendChild(kk);
+  });
+  var kn = el("span", {"class": "mlk"}); kn.appendChild(el("i", {"class": "none"})); kn.appendChild(document.createTextNode("no data"));
+  keys.appendChild(kn);
+  markSeg("mapmode", S.map);
+}
+
+// ---------------------------------------------------------------- controls
+function buildSources() {
+  var box = $("sources");
+  box.textContent = "";
+  D.sources.forEach(function (src) {
+    var card = el("div", {"class": "src", "data-key": src.key});
+    var head = el("div");
+    var b = el("button", {"class": "srcbtn", "aria-pressed": "false",
+      title: "show / hide " + src.label + " — " + src.description});
+    var sw = el("span", {"class": "sw"}); sw.style.background = color(src.slot);
+    b.appendChild(sw); b.appendChild(document.createTextNode(src.label));
+    b.onclick = function () { toggleSource(src.key); };
+    head.appendChild(b);
+    if (src.restricted) head.appendChild(el("span", {"class": "badge", title: "licensed data: do not share outside the team"}, "licensed"));
+    var lw = src.signals.reduce(function (m, s) { return s.last_week > m ? s.last_week : m; }, "");
+    head.appendChild(el("span", {"class": "when", title: "latest week in the data · raw snapshot " + (src.snapshot || "?")},
+                        "to " + lw + " · " + src.cadence));
+    card.appendChild(head);
+    var sigs = el("div", {"class": "sigs"});
+    src.signals.forEach(function (s) {
+      var sid = src.key + "." + s.key, g = SIG[sid];
+      var sb = el("button", {"class": "sig", "data-sid": sid, "aria-pressed": "false", title: s.description + " [" + s.unit + "]"});
+      sb.appendChild(dashSvg(src.slot, g.dash));
+      sb.appendChild(document.createTextNode(s.label));
+      sb.onclick = function () { toggleSignal(sid); };
+      sigs.appendChild(sb);
+    });
+    card.appendChild(sigs);
+    box.appendChild(card);
+  });
+}
+function markSources() {
+  var cards = document.querySelectorAll(".src");
+  for (var c = 0; c < cards.length; c++) {
+    var on = false, sbs = cards[c].querySelectorAll(".sig");
+    for (var k = 0; k < sbs.length; k++) {
+      var sid = sbs[k].getAttribute("data-sid"), sel = S.sel.indexOf(sid) >= 0, has = !!getSeries(sid, S.loc);
+      sbs[k].setAttribute("aria-pressed", sel ? "true" : "false");
+      sbs[k].classList.toggle("na", !has);
+      sbs[k].title = SIG[sid].desc + " [" + SIG[sid].unit + "]" + (has ? "" : " — not reported for " + S.loc);
+      if (sel) on = true;
+    }
+    cards[c].classList.toggle("on", on);
+    cards[c].querySelector(".srcbtn").setAttribute("aria-pressed", on ? "true" : "false");
+  }
+}
+function toggleSource(key) {
+  var mine = ORDER.filter(function (sid) { return SIG[sid].src.key === key; });
+  var anyOn = mine.some(function (sid) { return S.sel.indexOf(sid) >= 0; });
+  if (anyOn) S.sel = S.sel.filter(function (sid) { return mine.indexOf(sid) < 0; });
+  else {
+    var defs = mine.filter(function (sid) { return SIG[sid].def; });
+    (defs.length ? defs : mine.slice(0, 1)).forEach(function (sid) { S.sel.push(sid); });
+  }
+  render();
+}
+function toggleSignal(sid) {
+  var k = S.sel.indexOf(sid);
+  if (k >= 0) S.sel.splice(k, 1); else S.sel.push(sid);
+  render();
+}
+function buildSeasons() {
+  var box = $("seasons"); box.textContent = "";
+  allYears().forEach(function (y) {
+    var b = el("button", {"class": "schip", "data-y": String(y), "aria-pressed": "false",
+                          title: "season " + slabel(y) + " (MMWR week 30 to week 29)"}, slabel(y));
+    b.onclick = function () {
+      var k = S.seasons.indexOf(y);
+      if (k >= 0) { if (S.seasons.length > 1) S.seasons.splice(k, 1); } else S.seasons.push(y);
+      render();
+    };
+    box.appendChild(b);
+  });
+  var q = $("quick"); q.textContent = "";
+  [["latest", 1], ["last 2", 2], ["last 5", 5], ["all", 0]].forEach(function (o) {
+    var b = el("button", {title: "select " + o[0] + " season(s)"}, o[0]);
+    b.onclick = function () { S.seasons = o[1] ? lastN(o[1]) : allYears(); render(); };
+    q.appendChild(b);
+  });
+}
+function markSeasons() {
+  var bs = document.querySelectorAll("#seasons .schip");
+  for (var k = 0; k < bs.length; k++) {
+    var y = +bs[k].getAttribute("data-y"), on = S.seasons.indexOf(y) >= 0;
+    bs[k].setAttribute("aria-pressed", on ? "true" : "false");
+    bs[k].classList.toggle("na", S.sel.length > 0 && !seasonHasData(y, S.loc));
+  }
+}
+function buildSeg(id, opts, key) {
+  var box = $(id);
+  box.textContent = "";
+  opts.forEach(function (o) {
+    var b = el("button", {"data-v": o[0], "aria-pressed": "false"}, o[1]);
+    b.onclick = function () {
+      S[key] = o[0];
+      if (key === "view" && o[0] === "overlay" && S.seasons.length === 1) S.seasons = lastN(5);   // overlay needs past seasons
+      render();
+    };
+    box.appendChild(b);
+  });
+}
+function markSeg(id, v) {
+  var bs = $(id).querySelectorAll("button");
+  for (var k = 0; k < bs.length; k++) bs[k].setAttribute("aria-pressed", bs[k].getAttribute("data-v") === v ? "true" : "false");
+}
+function buildLocs() {
+  var dl = $("locs"); dl.textContent = "";
+  LOCS.forEach(function (l) { var o = el("option", {value: l.code}); o.textContent = l.name; dl.appendChild(o); });
+  buildHex();
+}
+function markLoc() {
+  var j = findLoc(S.loc), pos = $("pos"); pos.textContent = "";
+  pos.appendChild(document.createTextNode(S.loc + " · " + locName(S.loc) + " "));
+  pos.appendChild(el("span", {"class": "n"}, "(" + (j + 1) + " / " + LOCS.length + ")"));
+  $("tloc").textContent = locName(S.loc);
+  markHex();
+}
+function setLoc(code) {
+  var j = findLoc(code);
+  if (j < 0) return;
+  S.loc = LOCS[j].code;
+  render();
+}
+function step(d) { var j = findLoc(S.loc); setLoc(LOCS[(j + d + LOCS.length) % LOCS.length].code); }
+
+// ---------------------------------------------------------------- chart
+function seasonLines(ys) {
+  var shapes = [], ann = [];
+  ys.forEach(function (y) {
+    var d = y + "-10-01";
+    if (d > DATES[LAST]) return;
+    shapes.push({type: "line", xref: "x", yref: "paper", x0: d, x1: d, y0: 0, y1: 1,
+                 line: {color: css("--axis"), width: 1, dash: "dot"}, layer: "below"});
+    if (ys.length <= 8) ann.push({xref: "x", yref: "paper", x: d, y: 1, yanchor: "bottom", xanchor: "left", showarrow: false,
+              text: slabel(y), font: {size: 10, color: css("--muted")}});
+  });
+  return {shapes: shapes, ann: ann};
+}
+function render() {
+  markLoc(); markSources(); markSeasons(); markSeg("axis", S.axis); markSeg("view", S.view); save();
+  var ys = years(), bl = blocks();
+  var overlay = S.view === "overlay" && ys.length > 1;
+  var bold = ys[ys.length - 1];                         // overlay: the latest selected season is the bold one
+  var base = idxOf(wk30(CURY));                        // overlay x positions are this season's weeks
+  var sel = selected(), missing = [], empty = [];
+  var groups = [], groupOf = {}, past = [], current = [], labels = [], rows = [];
+
+  sel.forEach(function (sid) {
+    var g = SIG[sid];
+    if (!getSeries(sid, S.loc)) { missing.push(g.label); return; }
+    // pieces: one per season in overlay, one overall otherwise
+    var pieces = [];
+    if (overlay) {
+      ys.forEach(function (y) {
+        var a = idxOf(wk30(y)), b = idxOf(wk30(y + 1)) - 1, s = slice(sid, S.loc, a, b);
+        if (s && s.any) pieces.push({y: y, s: s, x: s.idx.map(function (j) { return wdate(base + j - a); })});
+      });
+    } else {                         // timeline: one trace per run of consecutive seasons
+      bl.forEach(function (b) {
+        var r = blockIdx(b), s = slice(sid, S.loc, r[0], r[1]);
+        if (s && s.any) pieces.push({y: bold, s: s, x: s.idx.map(function (j) { return DATES[j]; })});
+      });
+    }
+    if (!pieces.length) { empty.push(g.label); return; }
+    var gk = S.axis === "signal" ? sid : (S.axis === "peak" ? "peak" : g.unit);
+    if (!(gk in groupOf)) { groupOf[gk] = groups.length; groups.push({key: gk, unit: g.unit, label: g.label, slots: {}}); }
+    var gi = groupOf[gk]; groups[gi].slots[g.slot] = 1;
+    var yaxis = gi === 0 ? "y" : "y" + (gi + 1);
+    var mx = 0;
+    pieces.forEach(function (p) { p.s.y.forEach(function (v) { if (v != null && v > mx) mx = v; }); });
+    var npast = pieces.filter(function (p) { return p.y !== bold; }).length, kpast = 0;
+    var tlRow = overlay ? null : roRow(g, shortLabel(g), false), ovRows = [];
+    if (tlRow) rows.push(tlRow);
+    pieces.forEach(function (p) {
+      var isCur = !overlay || p.y === bold;
+      var y = p.s.y;
+      if (S.axis === "peak") y = p.s.y.map(function (v) { return v == null || !mx ? null : 100 * v / mx; });
+      var tr = {type: "scatter", mode: "lines", x: p.x, y: y, name: overlay && !isCur ? g.label + " " + slabel(p.y) : g.label,
+                showlegend: false, connectgaps: false, yaxis: yaxis, hoverinfo: "skip", meta: sid,
+                line: {color: color(g.slot), width: isCur ? 2.2 : 1.5, dash: g.dash}};
+      var r = tlRow;
+      if (overlay) { r = roRow(g, slabel(p.y), !isCur); r.group = shortLabel(g); ovRows.unshift(r); }   // newest season first
+      p.x.forEach(function (x, k) { if (p.s.y[k] != null) { r.vals[x] = [y[k], p.s.y[k]]; r.xs.push(x); } });
+      if (isCur) { current.push(tr); return; }
+      // past season: fainter the older it is
+      tr.opacity = r.opacity = 0.2 + 0.3 * (npast > 1 ? kpast / (npast - 1) : 1);
+      kpast++;
+      past.push(tr);
+      var best = -1;
+      y.forEach(function (v, k) { if (v != null && (best < 0 || v > y[best])) best = k; });
+      if (best >= 0) labels.push({sid: sid, x: p.x[best], y: y[best], yref: yaxis, text: slabel(p.y)});
+    });
+    rows = rows.concat(ovRows);
+  });
+  var traces = past.concat(current);       // current season drawn on top
+
+  var notes = [];
+  if (missing.length) notes.push("Not reported for " + locName(S.loc) + ": " + missing.join(", ") + ".");
+  if (empty.length) notes.push("No data in this range: " + empty.join(", ") + ".");
+  if (!sel.length) notes.push("Pick a source above to plot it.");
+  if (overlay) notes.push("Faint lines are earlier seasons, aligned by MMWR week (season = week 30 to week 29, ~Aug to Jul), labelled at their peak; the bold line is " + slabel(bold) + ".");
+  if (S.view === "overlay" && !overlay) notes.push("Select two or more seasons to overlay them.");
+  if (!overlay && bl.length > 1) notes.push("\u2afd marks skipped seasons (the gap is shortened to two weeks).");
+  if (S.loc === "US" && sel.some(function (s) { return SIG[s].src.key === "flusurv"; }))
+    notes.push("FluSurv-NET 'US' is the surveillance network's catchment (~9% of the population), not a national estimate.");
+  $("note").textContent = notes.join("  ");
+
+  var ink2 = css("--ink2"), grid = css("--grid"), axisc = css("--axis"), surf = css("--surface"), muted = css("--muted");
+  var W = $("chart").clientWidth || 900, n = Math.max(groups.length, 1);
+  var layout = {
+    paper_bgcolor: surf, plot_bgcolor: surf, font: {family: "system-ui, -apple-system, Segoe UI, sans-serif", size: 12, color: ink2},
+    margin: {l: 64, r: 64, t: 26, b: 40}, hovermode: false,     // values are read from the fixed readout panel instead
+    xaxis: {type: "date", gridcolor: grid, linecolor: axisc},
+    showlegend: false, uirevision: [S.loc, ys.join(), S.axis, S.view, sel.join()].join("|")
+  };
+  if (overlay) {
+    layout.xaxis.range = [wdate(base - 0.5), wdate(base + 52.5)];
+    layout.xaxis.tickformat = "%b"; layout.xaxis.dtick = "M1";
+    var oct = CURY + "-10-01";
+    layout.shapes = [{type: "line", xref: "x", yref: "paper", x0: oct, x1: oct, y0: 0, y1: 1,
+                      line: {color: axisc, width: 1, dash: "dot"}, layer: "below"}];
+    // callouts: always for the first plotted signal, for the rest only while it stays readable
+    var first = labels.length ? labels[0].sid : null;
+    var cand = labels.length <= 12 ? labels : labels.filter(function (l) { return l.sid === first; });
+    // declutter: highest peaks first; skip a label that would sit on top of one already placed
+    var ymax = {}, keep = [];
+    cand.forEach(function (l) { ymax[l.yref] = Math.max(ymax[l.yref] || 0, l.y); });
+    cand.slice().sort(function (a, b) { return b.y - a.y; }).forEach(function (l) {
+      var t = Date.parse(l.x);
+      var clash = keep.some(function (k) {
+        return k.yref === l.yref && Math.abs(Date.parse(k.x) - t) < 3 * WEEK && Math.abs(k.y - l.y) < 0.07 * ymax[l.yref];
+      });
+      if (!clash) keep.push(l);
+    });
+    layout.annotations = keep.map(function (l) {
+      return {x: l.x, y: l.y, xref: "x", yref: l.yref, text: l.text, showarrow: true, arrowhead: 0, arrowwidth: 1,
+              arrowcolor: muted, ax: 0, ay: -14, font: {size: 10, color: ink2}, bgcolor: surf, borderpad: 1, opacity: 0.95};
+    });
+  } else {
+    var sl = seasonLines(ys);
+    layout.shapes = sl.shapes; layout.annotations = sl.ann;
+    // skipped seasons: cut them out of the date axis, keeping a two-week gap marked with a break symbol
+    var rb = [];
+    for (var kb = 0; kb + 1 < bl.length; kb++) {
+      var e = blockIdx(bl[kb])[1], st = blockIdx(bl[kb + 1])[0];
+      if (st - e > 2) {
+        rb.push({bounds: [wdate(e + 1), wdate(st - 1)]});
+        layout.annotations.push({x: wdate(st - 1), xref: "x", yref: "paper", y: 0, yanchor: "bottom", yshift: 3,
+                                 showarrow: false, text: "\u2afd", font: {size: 15, color: muted}});
+        layout.shapes.push({type: "line", xref: "x", yref: "paper", x0: wdate(st - 1), x1: wdate(st - 1), y0: 0, y1: 1,
+                            line: {color: grid, width: 6}, layer: "below"});
+      }
+    }
+    if (rb.length) {
+      layout.xaxis.rangebreaks = rb;
+      // automatic ticks can land inside a cut-out stretch (they pile up on the break): place them by season
+      var tv = [], tt = [];
+      var months = ys.length <= 4 ? [[0, 8], [1, 0], [1, 4]] : [[1, 0]];     // [year offset, month]
+      ys.forEach(function (y) {
+        months.forEach(function (m) {
+          var d = new Date(Date.UTC(y + m[0], m[1], 1)).toISOString().slice(0, 10);
+          if (d < DATES[blockIdx([y])[0]] || d > DATES[blockIdx([y])[1]]) return;
+          tv.push(d); tt.push(MON[m[1]] + " " + (y + m[0]));
+        });
+      });
+      layout.xaxis.tickmode = "array"; layout.xaxis.tickvals = tv; layout.xaxis.ticktext = tt;
+    }
+  }
+  function axisColor(g) {   // a coloured axis line marks which source an axis belongs to
+    var slots = Object.keys(g.slots);
+    return slots.length === 1 ? color(+slots[0]) : axisc;
+  }
+  if (S.axis === "panels") {
+    var gap = 0.05, h = (1 - gap * (n - 1)) / n;
+    groups.forEach(function (g, k) {
+      var top = 1 - k * (h + gap);
+      layout[k === 0 ? "yaxis" : "yaxis" + (k + 1)] = {
+        domain: [Math.max(0, top - h), top], anchor: "x", rangemode: "tozero", gridcolor: grid, zeroline: false,
+        linecolor: axisColor(g), showline: true, linewidth: 2, title: {text: g.unit, font: {size: 11, color: ink2}}};
+    });
+    layout.xaxis.anchor = "y" + (n > 1 ? n : "");
+    $("chart").style.height = Math.max(420, 200 * n + 90) + "px";
+    layout.margin.r = 24;
+  } else {
+    $("chart").style.height = "";
+    var stepFrac = 66 / W, nL = Math.ceil(n / 2), nR = Math.floor(n / 2);
+    var dom = [stepFrac * (nL - 1), 1 - stepFrac * Math.max(nR - 1, 0)];
+    layout.xaxis.domain = dom;
+    if (nR === 0) layout.margin.r = 24;
+    groups.forEach(function (g, k) {
+      var left = k % 2 === 0, idx = Math.floor(k / 2);
+      var title = S.axis === "signal" ? g.label : (S.axis === "peak" ? "% of peak in view" : g.unit);
+      var ax = {rangemode: "tozero", zeroline: false, showline: true, linewidth: 2, linecolor: axisColor(g),
+                gridcolor: k === 0 ? grid : "rgba(0,0,0,0)", side: left ? "left" : "right",
+                title: {text: title, font: {size: 11, color: ink2}, standoff: 4}, automargin: false};
+      if (k > 0) {
+        ax.overlaying = "y";
+        if (idx === 0) ax.anchor = "x";
+        else { ax.anchor = "free"; ax.position = left ? Math.max(0, dom[0] - idx * stepFrac) : Math.min(1, dom[1] + idx * stepFrac); }
+      }
+      layout[k === 0 ? "yaxis" : "yaxis" + (k + 1)] = ax;
+    });
+    if (S.axis === "peak") layout.yaxis.range = [0, 105];
+  }
+  if (!groups.length) layout.yaxis = {visible: false};
+  Plotly.react("chart", traces, layout, {responsive: true, displaylogo: false,
+    modeBarButtonsToRemove: ["select2d", "lasso2d", "autoScale2d"],
+    toImageButtonOptions: {filename: "flu-surveillance-" + S.loc, scale: 2}});
+  if (RO.view !== S.view) { RO.paused = false; RO.hoverX = null; RO.view = S.view; }
+  buildReadout(rows, overlay);
+  placeReadout();
+  renderTable(sel);
+}
+
+// ---------------------------------------------------------------- readout: a fixed legend that shows the values at the guideline
+// The guideline follows the mouse over the plot; space (or the pause button) freezes it so the panel can be
+// scrolled or the mouse used elsewhere. Off the plot the panel shows the latest week.
+var RO = {rows: [], allX: [], latest: null, hoverX: null, x: null, paused: false, inside: false, folded: false,
+          cells: [], overlay: false, view: null, plot: null};
+try { RO.folded = localStorage.getItem(STORE + "-readout") === "folded"; } catch (e) {}
+var MON = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
+function longDate(d) { return MON[+d.slice(5, 7) - 1] + " " + (+d.slice(8, 10)) + ", " + d.slice(0, 4); }
+function shortDate(d) { return MON[+d.slice(5, 7) - 1] + " " + (+d.slice(8, 10)); }
+function mmwrWeek(d) {
+  var i = idxOf(Date.parse(d + "T00:00:00Z")), y = seasonOf(i), k = 30 + i - idxOf(wk30(y));
+  var n = idxOf(wk30(y + 1)) - idxOf(wk30(y));            // MMWR weeks in calendar year y (52 or 53)
+  return k > n ? k - n : k;
+}
+function shortLabel(g) {            // "Kinsa fever % ill" -> "fever % ill" inside the Kinsa column
+  var w = g.label.split(" "), src = g.src.label.split(" ");
+  return w.length > 1 && src.indexOf(w[0]) >= 0 ? w.slice(1).join(" ") : g.label;
+}
+function roRow(g, name, past) {
+  return {name: name, group: null, src: g.src, slot: g.slot, dash: g.dash, unit: g.unit, past: past, opacity: 1,
+          vals: {}, xs: [], title: g.label + " (" + g.unit + ")"};
+}
+function buildReadout(rows, overlay) {
+  RO.rows = rows; RO.overlay = overlay;
+  var body = $("robody"), grp = null, col = null, srcKey = null, seen = {};
+  body.textContent = ""; RO.cells = []; RO.latest = null; RO.allX = [];
+  rows.forEach(function (r) {
+    if (r.src.key !== srcKey) {         // one column per source
+      srcKey = r.src.key; grp = null;
+      col = el("div", {"class": "ro-col"});
+      var h = el("div", {"class": "ro-src"}), sq = el("span", {"class": "sw"});
+      sq.style.background = color(r.slot); h.appendChild(sq); h.appendChild(document.createTextNode(r.src.label));
+      col.appendChild(h); body.appendChild(col);
+    }
+    if (overlay && r.group !== grp) { col.appendChild(el("div", {"class": "ro-grp"}, r.group)); grp = r.group; }
+    var row = el("div", {"class": "ro-row" + (r.past ? " past" : ""), title: r.title});
+    var sw = dashSvg(r.slot, r.dash);
+    if (r.past) sw.style.opacity = Math.min(1, r.opacity + 0.25);
+    row.appendChild(sw); row.appendChild(el("span", {"class": "nm"}, r.name));
+    var v = el("span", {"class": "v"}, "–");
+    row.appendChild(v); col.appendChild(row); RO.cells.push(v);
+    var lx = r.xs[r.xs.length - 1];
+    if (!r.past && lx && (!RO.latest || lx > RO.latest)) RO.latest = lx;
+    r.xs.forEach(function (x) { if (!seen[x]) { seen[x] = 1; RO.allX.push(x); } });
+  });
+  RO.allX.sort();
+  var ro = $("readout");
+  ro.style.display = rows.length ? "block" : "none";
+  ro.classList.toggle("collapsed", RO.folded);
+  $("rofold").textContent = RO.folded ? "+" : "−";
+  $("rofold").setAttribute("aria-expanded", RO.folded ? "false" : "true");
+  showReadout();
+}
+function placeReadout() {           // the plot area, for the guideline and pointer hit-testing
+  var fl = $("chart")._fullLayout;
+  if (!fl || !fl.xaxis || !fl._size) return;
+  var xa = fl.xaxis, sz = fl._size, gd = $("guide");
+  RO.plot = {l: xa._offset, w: xa._length, t: sz.t, h: sz.h};
+  gd.style.top = sz.t + "px"; gd.style.height = sz.h + "px";
+  showReadout();
+}
+function showReadout() {
+  var mode = RO.paused ? "paused" : (RO.hoverX ? "hover" : "latest");
+  var x = RO.paused ? RO.x : (RO.hoverX || RO.latest);
+  var when = $("rowhen"), ro = $("readout");
+  ro.classList.toggle("paused", RO.paused);
+  $("ropause").textContent = RO.paused ? "resume" : "pause";
+  $("ropause").setAttribute("aria-pressed", RO.paused ? "true" : "false");
+  $("rohint").textContent = RO.paused ? "Paused: space resumes · Shift+← → moves a week"
+                                      : "Hover the chart to read values · space pauses";
+  if (!x) { when.textContent = "No data in view"; } else {
+    var d = RO.overlay ? "MMWR week " + mmwrWeek(x) + " (≈ " + shortDate(x) + ")" : "week ending " + longDate(x);
+    when.textContent = (mode === "latest" ? "Latest · " : "") + d;
+  }
+  RO.rows.forEach(function (r, k) {
+    var c = RO.cells[k], hit = x ? r.vals[x] : null, stale = null;
+    if (!hit && mode === "latest" && !RO.overlay && r.xs.length) { stale = r.xs[r.xs.length - 1]; hit = r.vals[stale]; }
+    c.textContent = "";
+    if (!hit) { c.textContent = "–"; return; }
+    if (S.axis === "peak") {
+      c.textContent = Math.round(hit[0]) + "%";
+      c.appendChild(el("small", {}, fmt(hit[1], r.unit)));
+    } else c.textContent = fmt(hit[1], r.unit);
+    if (stale) c.appendChild(el("small", {title: "last reported week"}, shortDate(stale)));
+  });
+  // guideline
+  var g = $("guide"), fl = $("chart")._fullLayout, P = RO.plot;
+  if (mode === "latest" || !x || !P || !fl || !fl.xaxis) { g.style.display = "none"; return; }
+  var px = fl.xaxis.l2p(fl.xaxis.d2l(x));
+  if (!(px >= 0 && px <= P.w)) { g.style.display = "none"; return; }
+  g.style.left = (P.l + px) + "px"; g.style.display = "block";
+  g.classList.toggle("paused", RO.paused);
+}
+function togglePause() {
+  if (RO.paused) { RO.paused = false; RO.hoverX = RO.inside ? RO.x : null; }
+  else { RO.x = RO.hoverX || RO.latest; if (!RO.x) return; RO.paused = true; }
+  showReadout();
+}
+function nudge(d) {                 // paused: move the guideline to the previous / next week that has data
+  var a = RO.allX, k = a.indexOf(RO.x);
+  if (k < 0) { k = 0; while (k < a.length && a[k] < RO.x) k++; k = d > 0 ? k : k - 1; }   // between weeks
+  else k += d;
+  k = Math.max(0, Math.min(a.length - 1, k));
+  if (a[k]) { RO.x = a[k]; showReadout(); }
+}
+function onPointer(e) {
+  RO.inside = true;
+  if (RO.paused || $("readout").contains(e.target) || !RO.plot) return;
+  var fl = $("chart")._fullLayout;
+  if (!fl || !fl.xaxis) return;
+  var r = $("chart").getBoundingClientRect(), px = e.clientX - r.left, py = e.clientY - r.top, P = RO.plot, x = null;
+  if (px >= P.l && px <= P.l + P.w && py >= P.t && py <= P.t + P.h)
+    x = wdate(Math.round((fl.xaxis.p2l(px - P.l) - T0) / WEEK));          // nearest week-ending Saturday
+  if (x !== RO.hoverX) { RO.hoverX = x; showReadout(); }
+}
+
+// ---------------------------------------------------------------- table
+function renderTable(sel) {
+  var t = $("latest"); t.textContent = "";
+  var hr = el("tr");
+  [["Source", ""], ["Signal", ""], ["Week ending", ""], ["Value", "num"], ["1-week change", "num"],
+   ["Season max (week)", "num"], ["Last season max (week)", "num"], ["Unit", ""]].forEach(function (h) {
+    hr.appendChild(el("th", h[1] ? {"class": h[1]} : {}, h[0])); });
+  var thead = el("thead"); thead.appendChild(hr); t.appendChild(thead);
+  var tb = el("tbody");
+  if (!sel.length) { var r0 = el("tr"); r0.appendChild(el("td", {colspan: "8", "class": "muted"}, "No signals selected.")); tb.appendChild(r0); }
+  sel.forEach(function (sid) {
+    var g = SIG[sid], s = getSeries(sid, S.loc), tr = el("tr");
+    var c1 = el("td"); var sw = el("span", {"class": "sw"}); sw.style.background = color(g.slot);
+    c1.appendChild(sw); c1.appendChild(document.createTextNode(" " + g.src.label)); tr.appendChild(c1);
+    var c2 = el("td"); c2.appendChild(dashSvg(g.slot, g.dash)); c2.appendChild(document.createTextNode(" " + g.label)); tr.appendChild(c2);
+    if (!s) {
+      tr.appendChild(el("td", {colspan: "5", "class": "muted"}, "not reported for " + locName(S.loc)));
+    } else {
+      var off = s[0], v = s[1], j = v.length - 1;
+      while (j >= 0 && v[j] == null) j--;
+      var last = j >= 0 ? v[j] : null, prev = j >= 1 ? v[j - 1] : null;
+      tr.appendChild(el("td", {}, j >= 0 ? DATES[off + j] : "–"));
+      tr.appendChild(el("td", {"class": "num"}, fmt(last, g.unit)));
+      var ch = "–";
+      if (last != null && prev) { var pc = (last - prev) / prev * 100; ch = (pc >= 0 ? "+" : "") + pc.toFixed(0) + "%"; }
+      tr.appendChild(el("td", {"class": "num"}, ch));
+      [CURY, CURY - 1].forEach(function (y) {
+        var m = seasonMax(s, y);
+        tr.appendChild(el("td", {"class": "num"}, m[0] == null ? "–" : fmt(m[0], g.unit) + " (" + wdate(m[1]).slice(5) + ")"));
+      });
+    }
+    tr.appendChild(el("td", {"class": "muted"}, g.unit));
+    tb.appendChild(tr);
+  });
+  t.appendChild(tb);
+}
+
+// ---------------------------------------------------------------- csv / about
+function downloadCsv() {
+  var rows = ["date,season,location,source,signal,label,value,unit"];
+  selected().forEach(function (sid) {
+    var g = SIG[sid];
+    blocks().forEach(function (b) {
+      var r = blockIdx(b), s = slice(sid, S.loc, r[0], r[1]);
+      if (!s) return;
+      s.idx.forEach(function (j, k) {
+        if (s.y[k] == null) return;
+        rows.push([DATES[j], slabel(seasonOf(j)), S.loc, g.src.key, g.key, '"' + g.label.replace(/"/g, '""') + '"', s.y[k], '"' + g.unit + '"'].join(","));
+      });
+    });
+  });
+  var blob = new Blob([rows.join("\n") + "\n"], {type: "text/csv"});
+  var a = el("a", {href: URL.createObjectURL(blob), download: "flu-surveillance-" + S.loc + "-" + D.data_through + ".csv"});
+  document.body.appendChild(a); a.click(); setTimeout(function () { URL.revokeObjectURL(a.href); a.remove(); }, 500);
+}
+function buildAbout() {
+  var box = $("aboutbody"); box.textContent = "";
+  var dl = el("dl");
+  D.sources.forEach(function (src) {
+    var dt = el("dt"), sw = el("span", {"class": "sw"}); sw.style.background = color(src.slot);
+    dt.appendChild(sw); dt.appendChild(document.createTextNode(" " + src.label + (src.restricted ? " (licensed)" : "")));
+    dl.appendChild(dt);
+    var dd = el("dd");
+    dd.appendChild(document.createTextNode(src.description + " Updated " + src.cadence + ". "));
+    dd.appendChild(document.createTextNode("Raw snapshot " + (src.snapshot || "?") + (src.remote_updated ? " (remote updated " + src.remote_updated.slice(0, 16).replace("T", " ") + " UTC)" : "") + ". "));
+    if (src.homepage) dd.appendChild(el("a", {href: src.homepage, target: "_blank", rel: "noopener"}, src.homepage));
+    var ul = el("ul");
+    src.signals.forEach(function (s) { ul.appendChild(el("li", {}, s.label + " — " + s.description + " [" + s.unit + "], through " + s.last_week)); });
+    dd.appendChild(ul);
+    dl.appendChild(dd);
+  });
+  box.appendChild(dl);
+  box.appendChild(el("p", {}, "All series are weekly (MMWR weeks ending Saturday). " +
+    (D.sources.some(function (x) { return x.key === "kinsa"; }) ? "Kinsa is the mean of daily values over complete weeks. " : "") +
+    "On this page a season runs from MMWR week 30 to week 29 (about Aug to Jul): the season buttons, the overlay and the season-max columns use that boundary. " +
+    "Pick any set of seasons; in the timeline, skipped seasons are cut out and shown as a short break. " +
+    "The hex map is coloured by the most recently selected signal, either by its change in the latest week or by the latest week as a % of last season's peak; states whose last report is more than two weeks older than the newest are left uncoloured. " +
+    "Dotted vertical lines mark Oct 1. NHSN hospital reporting was voluntary May-Oct 2024, so admissions in that window are near zero; turn on NHSN HRD '% hospitals reporting' to see coverage. " +
+    "Y-axes: 'One per unit' shares an axis between series with the same unit; the coloured axis line marks the source when an axis holds one source. " +
+    "Built " + D.generated + " from data/harmonized (" + (D.harmonized_at || "") + ")." + (D.public ? " Public build: licensed sources removed." : "")));
+}
+
+// ---------------------------------------------------------------- wire up
+function themeToggle() {
+  var cur = document.documentElement.getAttribute("data-theme");
+  var dark = cur ? cur === "dark" : matchMedia("(prefers-color-scheme: dark)").matches;
+  document.documentElement.setAttribute("data-theme", dark ? "light" : "dark");
+  try { localStorage.setItem(STORE + "-theme", dark ? "light" : "dark"); } catch (e) {}
+  restyle();
+}
+function restyle() { buildSources(); buildAbout(); render(); }
+try { var th = localStorage.getItem(STORE + "-theme"); if (th) document.documentElement.setAttribute("data-theme", th); } catch (e) {}
+if (window.matchMedia) {
+  var mq = matchMedia("(prefers-color-scheme: dark)");
+  if (mq.addEventListener) mq.addEventListener("change", restyle);
+}
+$("meta").textContent = "data through " + D.data_through + " · built " + D.generated + " · " +
+  D.sources.length + " sources" + (D.public ? " · public build" : "");
+buildLocs(); buildSources(); buildSeasons(); buildMapLegend(); buildSeg("view", VIEWS, "view"); buildSeg("axis", AXES, "axis"); buildAbout();
+$("prev").onclick = function () { step(-1); };
+$("next").onclick = function () { step(1); };
+$("theme").onclick = themeToggle;
+$("csv").onclick = downloadCsv;
+$("reset").onclick = function () { S.sel = DEFAULTS.slice(); S.seasons = [CURY]; S.axis = "unit"; S.view = "timeline"; S.map = "change"; render(); };
+$("q").onkeydown = function (e) { if (e.key === "Enter") { setLoc(this.value); this.select(); } };
+$("q").onchange = function () { setLoc(this.value); };
+document.addEventListener("keydown", function (e) {
+  var t = e.target.tagName;
+  if (t === "INPUT" || t === "SELECT" || t === "TEXTAREA" || e.metaKey || e.ctrlKey || e.altKey) return;
+  if (e.shiftKey && RO.paused && (e.key === "ArrowRight" || e.key === "ArrowLeft")) { nudge(e.key === "ArrowRight" ? 1 : -1); e.preventDefault(); }
+  else if (e.key === "ArrowRight") { step(1); e.preventDefault(); }
+  else if (e.key === "ArrowLeft") { step(-1); e.preventDefault(); }
+  else if (e.key === "/") { e.preventDefault(); $("q").focus(); $("q").select(); }
+});
+window.addEventListener("hashchange", function () { apply(readHash()); render(); });
+var cw = $("chartzone"), spaceHeld = false;     // the panel counts as "over the chart" for space
+cw.addEventListener("pointermove", onPointer);
+cw.addEventListener("pointerdown", onPointer);
+cw.addEventListener("pointerleave", function () {
+  RO.inside = false;
+  if (!RO.paused && RO.hoverX) { RO.hoverX = null; showReadout(); }
+});
+$("ropause").onclick = togglePause;
+$("rofold").onclick = function () {
+  RO.folded = !RO.folded;
+  try { localStorage.setItem(STORE + "-readout", RO.folded ? "folded" : "open"); } catch (e) {}
+  buildReadout(RO.rows, RO.overlay);
+};
+// space pauses / resumes while the pointer is over the chart (or while paused); captured before buttons see it
+document.addEventListener("keydown", function (e) {
+  if (e.key !== " " || e.metaKey || e.ctrlKey || e.altKey) return;
+  var t = e.target.tagName;
+  if (t === "INPUT" || t === "TEXTAREA" || t === "SELECT") return;
+  if (!RO.inside && !RO.paused) return;
+  e.preventDefault(); e.stopPropagation(); spaceHeld = true;
+  if (!e.repeat) togglePause();
+}, true);
+document.addEventListener("keyup", function (e) {
+  if (e.key === " " && spaceHeld) { e.preventDefault(); e.stopPropagation(); spaceHeld = false; }
+}, true);
+$("noscript").style.display = "none";
+load();
+render();
+$("chart").on("plotly_afterplot", placeReadout);      // resize, zoom, theme: re-pin the panel and guideline
+})();
+</script>
+</body>
+</html>

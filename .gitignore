@@ -1,0 +1,10 @@
+# downloaded and derived data (Kinsa is licensed) -- never commit
+data/
+dashboard/*.html
+config.json
+__pycache__/
+*.pyc
+.ipynb_checkpoints/
+*.log
+.venv/
+.DS_Store

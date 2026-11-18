@@ -1,0 +1,7 @@
+{
+  "_comment": "Copy to config.json to change defaults. Keys are the pull scripts' option names; command-line flags override these.",
+  "flusight": {"from_clone": null, "with_vintages": false},
+  "nhsn_hrd": {"dataset": "mpgq-jmmr"},
+  "nssp": {"with_counties": false},
+  "kinsa": {"overlap": 28}
+}
